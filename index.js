@@ -16,7 +16,12 @@ async function run() {
     try {
       await client.connect();
       const productCollection = client.db("bike-parts").collection('products');
-      
+      // all product
+      app.get('/product' ,async(req,res)=>{
+        const result=await productCollection.find().toArray()
+        res.send(result)
+
+      })
     } finally {
  
     }
