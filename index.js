@@ -65,29 +65,29 @@ async function run() {
 
     })
     // My order
-    // app.get('/myorder', verifyJWT, async (req, res) => {
-    //   const myorder = req.query.myorder
-    //   const authorization = req.headers.authorization
-    //   const decodedEmail = req.decoded.email
-    //   if (myorder === decodedEmail) {
-    //     const query = { customerEmial: myorder }
-    //     const result = await orderCollection.find(query).toArray()
-    //     return res.send(result)
-    //   }
-    //   else {
+    app.get('/myorder', verifyJWT, async (req, res) => {
+      const myorder = req.query.myorder
+      const authorization = req.headers.authorization
+      const decodedEmail = req.decoded.email
+      if (myorder === decodedEmail) {
+        const query = { customerEmial: myorder }
+        const result = await orderCollection.find(query).toArray()
+        return res.send(result)
+      }
+      else {
 
-    //     return res.status(403).send("Forbidden access")
-    //   }
+        return res.status(403).send("Forbidden access")
+      }
 
 
-    // })
-    // admin
-    app.get('/admin/:email', async (req, res) => {
-      const email = req.params.email
-      const user = await userCollection.findOne({ email: email })
-      const isAdmin = user.role === 'admin'
-      res.send({ admin: isAdmin })
     })
+    // admin
+    // app.get('/admin/:email', async (req, res) => {
+    //   const email = req.params.email
+    //   const user = await userCollection.findOne({ email: email })
+    //   const isAdmin = user.role === 'admin'
+    //   res.send({ admin: isAdmin })
+    // })
     // admin check
     app.put('/user/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
       const email = req.params.email
