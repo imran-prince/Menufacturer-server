@@ -59,28 +59,28 @@ async function run() {
       return res.send({ success: true, result })
     });
     // All user verifyJWT,
-    // app.get('/user',verifyJWT,  async (req, res) => {
-    //   const users = await userCollection.find().toArray()
-    //   res.send(users)
-
-    // })
-    // My order
-    app.get('/myorder', verifyJWT, async (req, res) => {
-      const myorder = req.query.myorder
-      const authorization = req.headers.authorization
-      const decodedEmail = req.decoded.email
-      if (myorder === decodedEmail) {
-        const query = { customerEmial: myorder }
-        const result = await orderCollection.find(query).toArray()
-        return res.send(result)
-      }
-      else {
-
-        return res.status(403).send("Forbidden access")
-      }
-
+    app.get('/user',verifyJWT,  async (req, res) => {
+      const users = await userCollection.find().toArray()
+      res.send(users)
 
     })
+    // My order
+    // app.get('/myorder', verifyJWT, async (req, res) => {
+    //   const myorder = req.query.myorder
+    //   const authorization = req.headers.authorization
+    //   const decodedEmail = req.decoded.email
+    //   if (myorder === decodedEmail) {
+    //     const query = { customerEmial: myorder }
+    //     const result = await orderCollection.find(query).toArray()
+    //     return res.send(result)
+    //   }
+    //   else {
+
+    //     return res.status(403).send("Forbidden access")
+    //   }
+
+
+    // })
     // admin
     app.get('/admin/:email', async (req, res) => {
       const email = req.params.email
