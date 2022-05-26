@@ -32,6 +32,18 @@ async function run() {
       await client.connect();
       const productCollection = client.db("bike-parts").collection('products');
       const orderCollection = client.db("bike-parts").collection('order');
+      const verifyAdmin = async (req, res, next) => {
+        const requester = req.decoded.email
+        const requesterAccount = await userCollection.findOne({ email: requester })
+        if (requesterAccount.role === 'admin') {
+            next()
+        }
+        else {
+            return res.status(403).send("Forbidden access")
+
+        }
+
+    }
       // all product
       app.get('/product' ,async(req,res)=>{
         const result=await productCollection.find().toArray()
