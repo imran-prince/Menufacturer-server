@@ -1,13 +1,15 @@
 const express = require('express')
 const app = express()
 const cors = require('cors')
+
 const jwt = require('jsonwebtoken');
 app.use(cors())
 app.use(express.json())
 require('dotenv').config()
 const port = process.env.PORT || 5000
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+ 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.3s80f.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 function verifyJWT(req, res, next) {
@@ -34,6 +36,8 @@ async function run() {
     const productCollection = client.db("bike-parts").collection('products');
     const orderCollection = client.db("bike-parts").collection('order');
     const userCollection = client.db("bike-parts").collection('users');
+    const reviewCollection = client.db("bike-parts").collection('review');
+    
     const verifyAdmin = async (req, res, next) => {
       const requester = req.decoded.email
       const requesterAccount = await userCollection.findOne({ email: requester })
@@ -52,14 +56,42 @@ async function run() {
       res.send(result)
 
     })
-    // order
+    // all order
+    app.get('/order', async (req, res) => {
+      const result = await orderCollection.find().toArray()
+      res.send(result)
+
+    })
+    // order create
     app.post('/order', async (req, res) => {
       const order = req.body;
       const result = await orderCollection.insertOne(order)
       return res.send({ success: true, result })
     });
+    // review create 
+    app.post('/review', async (req, res) => {
+      const review = req.body;
+      const result = await reviewCollection.insertOne(review)
+      return res.send({ success: true, result })
+    });
+    // all review
+    app.get('/review', async (req, res) => {
+      const result = await reviewCollection.find().toArray()
+      res.send(result)
+
+    })
+
+    // Delete product verifyJWT, verifyAdmin,
+    app.delete('/product/:_id',  async (req, res) => {
+      const id = req.params._id
+      const query = {_id:ObjectId(id)}
+
+
+      const result = await productCollection.deleteOne(query)
+      res.send(result)
+  })
     // All user verifyJWT,
-    app.get('/user',verifyJWT,  async (req, res) => {
+    app.get('/user',  async (req, res) => {
       const users = await userCollection.find().toArray()
       res.send(users)
 
@@ -111,9 +143,15 @@ async function run() {
         $set: user
       }
       const result = await userCollection.updateOne(filter, updateDoc, option)
-      const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+      const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '12h' })
       res.send({ result, token })
     })
+    // add product  verifyAdmin,
+    app.post('/addproduct', verifyJWT, async (req, res) => {
+      const newproduct = req.body
+      const result = await productCollection.insertOne(newproduct)
+      res.send(result)
+  })
   } finally {
 
   }
