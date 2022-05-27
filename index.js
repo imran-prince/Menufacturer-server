@@ -42,20 +42,21 @@ const auth = {
 // mailgun 
 const nodemailerMailgun = nodemailer.createTransport(mg(auth));
 function sendOrderEmail(order) {
-  const { productName, address, orderQuantity, phone } = order;
+  const { productName, address, orderQuantity,displayName } = order;
 
   var email = {
-    from: "princes@help.com",
+    from: "princes.parts@help.com",
     to: "csebubt35@gmail.com",
-    subject: `Your Appointment for ${productName} is Confirmed`,
-    text: `Your Appointment for ${productName} is   is Confirmed`,
+    subject: `Your Order for ${productName} is Confirmed`,
+    text: `Your order for ${productName} is  Confirmed`,
     html: `
-        <div>
-          
+        <div className='text-center '>
+          <h1>Welcome ${displayName}</h1>
           <h3>Your Order for ${productName} is confirmed</h3>
           <h3>Your Order  Quantity ${orderQuantity} is confirmed</h3>
-          <h3>Ypur Address ${address}</h3>
-          <p>Bangladesh</p>
+          <h3>Your Address ${address}</h3>
+          <h3>Our Contact Number  01765565665</h3>
+          <p>princes.parts  limited </p>
         </div>
       `,
   };
