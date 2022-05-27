@@ -1,15 +1,20 @@
 const express = require('express')
 const app = express()
 const cors = require('cors')
-
+const mg = require('nodemailer-mailgun-transport');
+const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
-app.use(cors())
+app.use(cors({
+  origin: true,
+  optionsSuccessStatus: 200,
+  credentials: true,
+}))
 app.use(express.json())
 require('dotenv').config()
 const port = process.env.PORT || 5000
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
- 
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.3s80f.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 function verifyJWT(req, res, next) {
@@ -28,6 +33,41 @@ function verifyJWT(req, res, next) {
   })
 
 }
+const auth = {
+  auth: {
+      api_key: '3d0f40f85c4d88f9014c80f33a13974a-8d821f0c-1c521e3d',
+      domain: 'sandboxb565a25c96b6461c9ed36ef86f8af37e.mailgun.org'
+  }
+}
+// mailgun 
+const nodemailerMailgun = nodemailer.createTransport(mg(auth));
+function sendOrderEmail(order) {
+  const { productName, address, orderQuantity, phone } = order;
+
+  var email = {
+    from: "princes@help.com",
+    to: "csebubt35@gmail.com",
+    subject: `Your Appointment for ${productName} is Confirmed`,
+    text: `Your Appointment for ${productName} is   is Confirmed`,
+    html: `
+        <div>
+          
+          <h3>Your Order for ${productName} is confirmed</h3>
+          <h3>Your Order  Quantity ${orderQuantity} is confirmed</h3>
+          <h3>Ypur Address ${address}</h3>
+          <p>Bangladesh</p>
+        </div>
+      `,
+  };
+
+  nodemailerMailgun.sendMail(email, (err, info) => {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log(info);
+    }
+  });
+}
 
 
 async function run() {
@@ -37,7 +77,7 @@ async function run() {
     const orderCollection = client.db("bike-parts").collection('order');
     const userCollection = client.db("bike-parts").collection('users');
     const reviewCollection = client.db("bike-parts").collection('review');
-    
+
     const verifyAdmin = async (req, res, next) => {
       const requester = req.decoded.email
       const requesterAccount = await userCollection.findOne({ email: requester })
@@ -66,6 +106,7 @@ async function run() {
     app.post('/order', async (req, res) => {
       const order = req.body;
       const result = await orderCollection.insertOne(order)
+      sendOrderEmail(order)
       return res.send({ success: true, result })
     });
     // review create 
@@ -82,20 +123,34 @@ async function run() {
     })
 
     // Delete product verifyJWT, verifyAdmin,
-    app.delete('/product/:_id',  async (req, res) => {
+    app.delete('/product/:_id', verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params._id
-      const query = {_id:ObjectId(id)}
-
-
+      const query = { _id: ObjectId(id) }
       const result = await productCollection.deleteOne(query)
       res.send(result)
-  })
+    })
+    // Delete manage product by admin
+    app.delete('/manageproduct/:_id', verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params._id
+      const query = { _id: ObjectId(id) }
+      const result = await orderCollection.deleteOne(query)
+      res.send(result)
+    })
+    // cancel order 
+    app.delete('/celcelorder/:_id', verifyJWT, async (req, res) => {
+      const id = req.params._id
+      const query = { _id: ObjectId(id) }
+      const result = await orderCollection.deleteOne(query)
+      res.send(result)
+    })
     // All user verifyJWT,
-    app.get('/user',  async (req, res) => {
+    app.get('/user', verifyJWT, async (req, res) => {
       const users = await userCollection.find().toArray()
       res.send(users)
 
     })
+
+
     // My order
     app.get('/myorder', verifyJWT, async (req, res) => {
       const myorder = req.query.myorder
@@ -113,6 +168,8 @@ async function run() {
 
 
     })
+    // profile update 
+
     // admin
     app.get('/admin/:email', async (req, res) => {
       const email = req.params.email
@@ -128,10 +185,7 @@ async function run() {
         $set: { role: 'admin' }
       }
       const result = await userCollection.updateOne(filter, updateDoc)
-
       res.send(result)
-
-
     })
     // jwt sign in
     app.put('/user/:email', async (req, res) => {
@@ -146,12 +200,19 @@ async function run() {
       const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '12h' })
       res.send({ result, token })
     })
+    // sigle user
+    app.get('/user/:email', async (req, res) => {
+      const email = req.params.email
+      const filter = { email: email }
+      const result = await userCollection.findOne(filter)
+      res.send(result)
+    })
     // add product  verifyAdmin,
     app.post('/addproduct', verifyJWT, async (req, res) => {
       const newproduct = req.body
       const result = await productCollection.insertOne(newproduct)
       res.send(result)
-  })
+    })
   } finally {
 
   }
