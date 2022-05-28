@@ -227,7 +227,7 @@ async function run() {
 run().catch(console.dir);
 
 app.get('/', (req, res) => {
-  res.send('Welcome to Princes parts limited company in dhaka mirpur bangladesh')
+  res.send('Welcome to Princes parts limited company Japan ')
 })
 
 app.listen(port, () => {
