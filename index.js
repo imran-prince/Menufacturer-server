@@ -103,9 +103,15 @@ async function run() {
       res.send(result)
 
     })
+    
+  //    
     // order create
     app.post('/order', async (req, res) => {
       const order = req.body;
+      const exists = await orderCollection.findOne(order)
+      if (exists) {
+        return res.send({ success: false, order: exists })
+    }
       const result = await orderCollection.insertOne(order)
       sendOrderEmail(order)
       return res.send({ success: true, result })
